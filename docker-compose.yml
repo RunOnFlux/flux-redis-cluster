@@ -1,0 +1,88 @@
+version: '3.8'
+
+networks:
+  cluster_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+services:
+  mock-api:
+    build:
+      context: ./mock-api
+    container_name: mock-flux-api
+    ports:
+      - "8080:80"
+    networks:
+      cluster_network:
+        ipv4_address: 172.20.0.5
+    restart: unless-stopped
+    environment:
+      INITIAL_NODES_FILE: ""
+
+  redis-node1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "6380:6380"
+    hostname: redis-cluster-node1
+    container_name: redis-cluster-node1
+    networks:
+      cluster_network:
+        ipv4_address: 172.20.0.10
+    restart: unless-stopped
+    environment:
+      - APP_NAME=flux-redis-cluster
+      - FLUX_API_URL=http://172.20.0.5:80
+      - REDIS_PASSWORD=secret
+      - SENTINEL_PASSWORD=secret
+      - SSL_PASSPHRASE=secretseed
+      - MY_IP=172.20.0.10
+    depends_on:
+      - mock-api
+
+  redis-node2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "6381:6380"
+    hostname: redis-cluster-node2
+    container_name: redis-cluster-node2
+    networks:
+      cluster_network:
+        ipv4_address: 172.20.0.11
+    restart: unless-stopped
+    environment:
+      - APP_NAME=flux-redis-cluster
+      - FLUX_API_URL=http://172.20.0.5:80
+      - REDIS_PASSWORD=secret
+      - SENTINEL_PASSWORD=secret
+      - SSL_PASSPHRASE=secretseed
+      - MY_IP=172.20.0.11
+    depends_on:
+      - mock-api
+
+  redis-node3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "6382:6380"
+    hostname: redis-cluster-node3
+    container_name: redis-cluster-node3
+    networks:
+      cluster_network:
+        ipv4_address: 172.20.0.12
+    restart: unless-stopped
+    environment:
+      - APP_NAME=flux-redis-cluster
+      - FLUX_API_URL=http://172.20.0.5:80
+      - REDIS_PASSWORD=secret
+      - SENTINEL_PASSWORD=secret
+      - SSL_PASSPHRASE=secretseed
+      - MY_IP=172.20.0.12
+    depends_on:
+      - mock-api

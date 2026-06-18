@@ -1,0 +1,4 @@
+services:
+  mock-api:
+    environment:
+      INITIAL_NODES_FILE: ""
