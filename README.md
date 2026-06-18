@@ -72,10 +72,10 @@ Key Points:
 
 2. **Connect from other Flux components**:
    ```bash
-   # Recommended — connect via proxy (always routes to current master):
+   # Recommended - connect via proxy (always routes to current master):
    redis-cli -h [REDIS_COMPONENT_NAME] -p 6380 -a [REDIS_PASSWORD] --tls --insecure
 
-   # Direct connection to a specific node (bypasses proxy — use only for read replicas or diagnostics):
+   # Direct connection to a specific node (bypasses proxy - use only for read replicas or diagnostics):
    redis-cli -h [REDIS_COMPONENT_NAME] -p 6379 -a [REDIS_PASSWORD] --tls --insecure
    ```
    > Replace `[REDIS_COMPONENT_NAME]` with the name you gave the Redis component in your Flux app.
@@ -127,7 +127,7 @@ The supervisord configuration manages four main processes:
 
 #### Master-Routing Proxy (Recommended)
 
-Each node runs a lightweight TCP proxy on **port 6380** that automatically routes all connections to the current Redis master over TLS. Your application does not need to know which node is the master — just connect to any cluster node on port 6380 and writes will always land on the correct node, even after a failover.
+Each node runs a lightweight TCP proxy on **port 6380** that automatically routes all connections to the current Redis master over TLS. Your application does not need to know which node is the master - just connect to any cluster node on port 6380 and writes will always land on the correct node, even after a failover.
 
 ```text
 App → any-node:6380 (proxy) → discovers master via local Sentinel → forwards to master:6379
@@ -137,7 +137,7 @@ After a failover, the proxy detects the new master within `PROXY_HEALTH_INTERVAL
 
 ## Files Overview
 
-- **Dockerfile**: Multi-stage build — Go binary compiled inside Docker, no local Go toolchain needed.
+- **Dockerfile**: Multi-stage build - Go binary compiled inside Docker, no local Go toolchain needed.
 - **docker-compose.yml**: Service definition with networking and volumes for testing.
 - **docker-compose.test.yml**: Testing overrides with shorter timeouts.
 - **redis.conf.tpl**: Template for Redis configuration.
