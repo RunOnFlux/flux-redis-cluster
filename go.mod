@@ -2,7 +2,7 @@ module flux-redis-cluster
 
 go 1.22.2
 
-require github.com/redis/go-redis/v9 v9.5.1
+require github.com/redis/go-redis/v9 v9.5.5
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
