@@ -1,49 +1,195 @@
 # Flux Redis Cluster
 
-A highly available, self-configuring Redis cluster architecture designed specifically to run seamlessly on the Flux Cloud. This project provides an autonomous Redis deployment with automatic failover, managed entirely by a custom Go agent (`flux-agent`).
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Redis](https://img.shields.io/badge/Redis-6.0.16-red.svg)
+![Sentinel](https://img.shields.io/badge/Sentinel-High%20Availability-green.svg)
+![Docker](https://img.shields.io/badge/Docker-required-blue.svg)
 
-## Architecture
+This project creates a self-configuring, highly-available Redis cluster that dynamically discovers its members through the Flux API. The cluster uses Redis Sentinel for high availability and automatic failover, and automatically adapts to nodes being added or removed from the environment.
 
-The cluster relies on **Redis Sentinel** for high availability and failover, but removes the manual configuration burden by automating peer discovery, certificate generation, and node lifecycle management.
+## Prerequisites
 
-Key components of each node:
-1. **Redis Server**: The core data store, running in either `master` or `replica` mode.
-2. **Redis Sentinel**: Monitors the Redis servers, handles failovers, and acts as the source of truth for the current topology.
-3. **Flux Agent**: A custom Go daemon responsible for:
-    - **Initialization (`init`)**: Discovers peers via the Flux Location API. If the node is the first to boot, it configures itself as the master. Otherwise, it joins as a replica.
-    - **Reconciliation (`daemon`)**: Continuously polls the Flux API for topology changes, dynamically registering new nodes to Sentinel and removing dead nodes.
-    - **Routing Proxy (`proxy`)**: A built-in TCP proxy that listens for incoming client connections and transparently forwards them to the active Redis master, solving NAT hairpinning and IP fluidity issues.
-    - **Deterministic TLS**: Generates deterministic TLS certificates on boot, ensuring zero-configuration encrypted communication between all cluster members.
+- Docker
+- Docker Compose
+- Access to Flux network for API calls
 
-## Security
+## Quick Start
 
-- All communication between Redis and Sentinel nodes is encrypted via TLS.
-- Client connections to the proxy are secured using TLS passthrough.
-- The processes within the Docker container run under a restricted, non-root `redis` user, with strict permission enforcement on data directories.
+### Production Deployment on Flux Network
 
-## Local Testing Environment
+#### Architecture Overview
 
-A local testing infrastructure is provided using `docker-compose` and a mock Flux API server to simulate the production environment. 
+```text
+   ┌───────────────────┐       ┌───────────────────┐       ┌───────────────────┐
+   │      Node 1       │       │      Node 2       │       │       Node 3      │
+   │  ┌─────────────┐  │       │  ┌─────────────┐  │       │  ┌─────────────┐  │
+   │  │  Your App   │  │       │  │  Your App   │  │       │  │  Your App   │  │
+   │  │ (Component) │  │       │  │ (Component) │  │       │  │ (Component) │  │
+   │  └──────┬──────┘  │       │  └──────┬──────┘  │       │  └──────┬──────┘  │
+   │         │ :6380   │       │         │ :6380   │       │         │ :6380   │
+   │  ┌──────▼──────┐  │       │  ┌──────▼──────┐  │       │  ┌──────▼──────┐  │
+   │  │   Proxy     │  │       │  │   Proxy     │  │       │  │   Proxy     │  │
+   │  │(primary-    │  │       │  │(primary-    │  │       │  │(primary-    │  │
+   │  │  routing)   │  │       │  │  routing)   │  │       │  │  routing)   │  │
+   │  └──────┬──────┘  │       │  └──────┬──────┘  │       │  └──────┬──────┘  │
+   │         │         │       │         │         │       │         │         │
+   │  ┌──────▼──────┐  │       │  ┌──────▼──────┐  │       │  ┌──────▼──────┐  │
+   │  │   Redis     │  │       │  │   Redis     │  │       │  │   Redis     │  │
+   │  │ + Sentinel  │  │       │  │ + Sentinel  │  │       │  │ + Sentinel  │  │
+   │  │   MASTER    │◄─┼───────┼─►│   REPLICA   │◄─┼───────┼─►│   REPLICA   │  │
+   │  │(Read+Write) │  │       │  │ (Read-Only) │  │       │  │ (Read-Only) │  │
+   │  └─────────────┘  │       │  └─────────────┘  │       │  └─────────────┘  │
+   └───────────────────┘       └───────────────────┘       └───────────────────┘
+            │                            │                           │
+            └────────────────────────────┼───────────────────────────┘
+                            Replication via Public Internet
+Key Points:
+• Each application connects to its local proxy on port 6380
+• The proxy polls local Sentinel to discover the current master and forwards all connections there
+• After a failover the proxy automatically reroutes new connections to the new master
+• Redis instances replicate data across nodes via public internet over TLS
+• Only MASTER accepts writes; REPLICA nodes are read-only
+```
 
-### Prerequisites
-- Docker and Docker Compose
-- Python 3.10+
-- `pytest` and `redis-py`
+1. **Deploy on Flux**:
+  - Log in to home.runonflux.io and navigate to Applications > Register New App.
+  - Add a component for Redis.
+  - Use the built Docker image.
+  - Set the Container Data for the component to `/var/lib/redis/data`.
+  - Add these ports to the `Cont. Ports` field: `[6379, 26379, 6380]`.
+  - Using the `Ports` field, map those ports to new ones, for example: `[16379, 26380, 16380]`.
+  - For the `Domains` field, add this: `["","",""]`.
+  - Use the following sample to set the environment variables for the Redis component:
 
-### Running the Integration Tests
-
-The integration tests spin up the mock API and three Redis nodes, verify the cluster initialization, and simulate a master node failure to ensure Sentinel elects a new master and the proxy routes traffic correctly.
-
-1. Set up the Python virtual environment and install dependencies:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r tests/requirements.txt
+   ```json
+   [
+      "HOST_REDIS_PORT=16379",
+      "HOST_SENTINEL_PORT=26380",
+      "REDIS_PASSWORD=your-super-secret-password",
+      "SSL_PASSPHRASE=your-ssl-passphrase"
+   ]
    ```
 
-2. Run the test suite:
+2. **Connect from other Flux components**:
    ```bash
-   pytest tests/test_cluster.py -v
+   # Recommended — connect via proxy (always routes to current master):
+   redis-cli -h [REDIS_COMPONENT_NAME] -p 6380 -a [REDIS_PASSWORD] --tls --insecure
+
+   # Direct connection to a specific node (bypasses proxy — use only for read replicas or diagnostics):
+   redis-cli -h [REDIS_COMPONENT_NAME] -p 6379 -a [REDIS_PASSWORD] --tls --insecure
+   ```
+   > Replace `[REDIS_COMPONENT_NAME]` with the name you gave the Redis component in your Flux app.
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `HOST_REDIS_PORT` | Host Redis port mapping | `6379` |
+| `HOST_SENTINEL_PORT` | Host Sentinel port mapping | `26379` |
+| `REDIS_PORT` | Internal Redis port | `6379` |
+| `SENTINEL_PORT` | Internal Sentinel port | `26379` |
+| `REDIS_PASSWORD` | Redis password (used for both requirepass and masterauth) | Required |
+| `SSL_PASSPHRASE` | Deterministic passphrase for certificate generation | Required |
+| `SSL_CERT_VALIDITY_DAYS` | Certificate validity period in days | `3650` |
+| `UPDATE_INTERVAL_SECONDS` | Update daemon reconciliation interval | `60` |
+| `PROXY_LISTEN_PORT` | Port the primary-routing proxy listens on inside the container | `6380` |
+| `PROXY_HEALTH_INTERVAL_SECONDS` | How often (seconds) the proxy polls Sentinel to discover the current master | `3` |
+
+## How It Works
+
+### Startup Process
+
+1. **Discovery Phase**: Container calls `https://api.runonflux.io/apps/location/{APP_NAME}` to get all cluster member IPs.
+2. **Certificate Generation**: Deterministically generates TLS certificates for the root CA, Redis Server, Sentinel, and Proxy using the `SSL_PASSPHRASE`.
+3. **Configuration Generation**: Creates Redis and Sentinel configuration files dynamically based on whether it is the first node (initial master) or subsequent node (replica).
+4. **Service Startup**: Supervisord starts Redis, Sentinel, Proxy, and the cluster update daemon.
+
+### Dynamic Membership
+
+- **Background Process**: Continuously monitors Flux API.
+- **Automatic Adjustments**: 
+  - Adds new Sentinel instances to the local Sentinel configuration using `SENTINEL MONITOR`.
+  - Removes dead or unavailable Sentinel and Redis nodes using `SENTINEL REMOVE`.
+- **Self-Registration**: New nodes automatically join the cluster as replicas when they start up.
+
+### Service Management
+
+The supervisord configuration manages four main processes:
+
+- **redis**: The Redis server process (Master or Replica).
+- **sentinel**: The Redis Sentinel process handling high-availability elections.
+- **updater**: Background daemon that maintains cluster membership and syncs with Flux API.
+- **proxy**: TCP master-routing proxy on port 6380.
+
+### Access Redis
+
+#### Master-Routing Proxy (Recommended)
+
+Each node runs a lightweight TCP proxy on **port 6380** that automatically routes all connections to the current Redis master over TLS. Your application does not need to know which node is the master — just connect to any cluster node on port 6380 and writes will always land on the correct node, even after a failover.
+
+```text
+App → any-node:6380 (proxy) → discovers master via local Sentinel → forwards to master:6379
+```
+
+After a failover, the proxy detects the new master within `PROXY_HEALTH_INTERVAL_SECONDS` (default 3 s) and routes new connections there automatically.
+
+## Files Overview
+
+- **Dockerfile**: Multi-stage build — Go binary compiled inside Docker, no local Go toolchain needed.
+- **docker-compose.yml**: Service definition with networking and volumes for testing.
+- **docker-compose.test.yml**: Testing overrides with shorter timeouts.
+- **redis.conf.tpl**: Template for Redis configuration.
+- **sentinel.conf.tpl**: Template for Sentinel configuration.
+- **generate-certs.sh**: Deterministic Root CA and certificate generator.
+- **supervisord.conf**: Process management configuration (redis, sentinel, updater, proxy).
+- **cmd/flux-agent/**: Go source for the agent binary (init, daemon, proxy).
+
+## Local Testing
+
+For local development and testing, this repository includes a complete mock environment:
+
+1. **Start local test cluster**:
+   ```bash
+   docker compose up -d --build
    ```
 
-The test suite automatically handles booting the `docker-compose` environment and tearing it down after execution.
+2. **Access local services**:
+   - **Mock Flux API**: http://localhost:8080
+   - **Master-routing proxy** (node 1): `localhost:6380` → always connects to current master.
+   - **Redis direct** (per-node):
+     - Node 1: `localhost:6379`
+     - Node 2: `localhost:6381` (mapped from 6379)
+     - Node 3: `localhost:6382` (mapped from 6379)
+
+3. **Connect to Redis (Requires python setup or redis-cli with TLS disabled for external access)**:
+   The local setup requires Python `redis-py` to easily handle the self-signed certificates.
+
+### Integration Test Suite
+
+A pytest-based integration test suite is included under `tests/` for verifying cluster behaviour under initialization and failover scenarios.
+
+**Install dependencies**:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r tests/requirements.txt
+```
+
+**Run tests**:
+```bash
+pytest tests/test_cluster.py -v
+```
+
+The test suite automatically builds images, tests initialization and role assignments, triggers a master node kill, and verifies that a failover successfully executes and proxy traffic routes correctly.
+
+### Logs
+
+Check logs for each component:
+```bash
+/var/log/supervisor/redis.out.log
+/var/log/supervisor/sentinel.out.log
+/var/log/supervisor/updater.out.log
+/var/log/supervisor/proxy.out.log
+```
