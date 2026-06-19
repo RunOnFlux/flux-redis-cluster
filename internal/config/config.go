@@ -41,6 +41,15 @@ func FromEnv() *Config {
 	if c.AppName == "" {
 		c.AppName = "flux-redis-cluster"
 	}
+	if c.RedisPassword == "" {
+		c.RedisPassword = "secret"
+	}
+	if c.SentinelPassword == "" {
+		c.SentinelPassword = "secret"
+	}
+	if c.SSLPassphrase == "" {
+		c.SSLPassphrase = "secretseed"
+	}
 	if c.FluxAPIURL == "" {
 		c.FluxAPIURL = "https://api.runonflux.io"
 	}
