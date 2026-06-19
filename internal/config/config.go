@@ -42,7 +42,7 @@ func FromEnv() *Config {
 		c.AppName = "flux-redis-cluster"
 	}
 	if c.FluxAPIURL == "" {
-		c.FluxAPIURL = "http://localhost:8080"
+		c.FluxAPIURL = "https://api.runonflux.io"
 	}
 	if c.ConfigCommandName == "" {
 		c.ConfigCommandName = "FLUX_CONFIG" // renamed from CONFIG
