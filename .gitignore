@@ -1,5 +1,5 @@
 venv/
-flux-agent
+/flux-agent
 cluster.log
 *.pyc
 __pycache__/
