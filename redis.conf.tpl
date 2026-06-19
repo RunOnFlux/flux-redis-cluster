@@ -9,6 +9,9 @@ tls-auth-clients no
 tls-replication yes
 tls-cluster yes
 
+replica-announce-ip {{ .AnnounceIP }}
+replica-announce-port {{ .AnnounceRedisPort }}
+
 requirepass {{ .RedisPassword }}
 masterauth {{ .RedisPassword }}
 

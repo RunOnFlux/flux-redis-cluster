@@ -68,6 +68,7 @@ def test_single_master_elected(cluster: RedisClusterManager):
 def test_data_replication(cluster: RedisClusterManager):
     """Write a key via one proxy, verify it's readable from all proxies."""
     # Write through the first node's proxy
+    cluster.wait_for_proxy_ready(BASE_NODES["node1"].proxy_host_port)
     writer = cluster.get_proxy_client(BASE_NODES["node1"].proxy_host_port)
     writer.set("replication_test", "replicated_value")
     print("  Wrote 'replication_test' via node1 proxy")

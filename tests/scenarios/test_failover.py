@@ -60,6 +60,7 @@ def test_data_survives_failover(cluster: RedisClusterManager):
     # Use a surviving node's proxy to write
     surviving_nodes = [n for n in BASE_NODES if n != old_master_name]
     surviving_cfg = BASE_NODES[surviving_nodes[0]]
+    cluster.wait_for_proxy_ready(surviving_cfg.proxy_host_port)
     writer = cluster.get_proxy_client(surviving_cfg.proxy_host_port)
     writer.set("pre_failover_key1", "value1")
     writer.set("pre_failover_key2", "value2")

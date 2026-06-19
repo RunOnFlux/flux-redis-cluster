@@ -147,6 +147,33 @@ class RedisClusterManager:
                 time.sleep(5)
                 continue
 
+            sentinel_peers_ready = 0
+            for node_name in list(BASE_NODES)[:expected_nodes]:
+                peers_cmd = (
+                    "redis-cli -p 26379 -a {password} "
+                    "--tls "
+                    "--cert /etc/ssl/cluster/sentinel/server.crt "
+                    "--key /etc/ssl/cluster/sentinel/server.key "
+                    "--cacert /etc/ssl/cluster/ca/ca.crt "
+                    "SENTINEL sentinels {app}"
+                ).format(password=SENTINEL_PASSWORD, app=APP_NAME)
+                try:
+                    exit_code, output = self.exec_in_container(node_name, peers_cmd)
+                    if exit_code == 0:
+                        lines = [
+                            l.strip()
+                            for l in output.strip().splitlines()
+                            if not l.startswith("Warning:")
+                        ]
+                        if sum(1 for line in lines if line == "name") >= expected_nodes - 1:
+                            sentinel_peers_ready += 1
+                except Exception:
+                    pass
+
+            if sentinel_peers_ready < expected_nodes:
+                time.sleep(5)
+                continue
+
             masters = 0
             slaves = 0
             for node_name in list(BASE_NODES)[:expected_nodes]:
@@ -174,7 +201,12 @@ class RedisClusterManager:
             if masters == 1 and slaves == expected_nodes - 1:
                 return True
 
-            print(f"  [wait_for_healthy] reachable={reachable}, masters={masters}, slaves={slaves}")
+            print(
+                "  [wait_for_healthy] "
+                f"reachable={reachable}, "
+                f"sentinel_peers_ready={sentinel_peers_ready}, "
+                f"masters={masters}, slaves={slaves}"
+            )
             time.sleep(5)
 
         raise TimeoutError(

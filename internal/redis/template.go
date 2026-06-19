@@ -10,12 +10,15 @@ import (
 )
 
 type TemplateData struct {
-	ClusterName       string
-	MasterIP          string
-	MasterPort        int
-	RedisPassword     string
-	SentinelPassword  string
-	ConfigCommandName string
+	ClusterName          string
+	MasterIP             string
+	MasterPort           int
+	AnnounceIP           string
+	AnnounceRedisPort    int
+	AnnounceSentinelPort int
+	RedisPassword        string
+	SentinelPassword     string
+	ConfigCommandName    string
 }
 
 func RenderConfig(inPath, outPath string, cfg *config.Config, masterIP string) error {
@@ -31,12 +34,15 @@ func RenderConfig(inPath, outPath string, cfg *config.Config, masterIP string) e
 
 	masterHost, masterPort := cfg.SentinelMasterEndpoint(masterIP)
 	td := TemplateData{
-		ClusterName:       cfg.AppName,
-		MasterIP:          masterHost,
-		MasterPort:        masterPort,
-		RedisPassword:     cfg.RedisPassword,
-		SentinelPassword:  cfg.SentinelPassword,
-		ConfigCommandName: cfg.ConfigCommandName,
+		ClusterName:          cfg.AppName,
+		MasterIP:             masterHost,
+		MasterPort:           masterPort,
+		AnnounceIP:           cfg.MyIP,
+		AnnounceRedisPort:    cfg.HostRedisPort,
+		AnnounceSentinelPort: cfg.HostSentinelPort,
+		RedisPassword:        cfg.RedisPassword,
+		SentinelPassword:     cfg.SentinelPassword,
+		ConfigCommandName:    cfg.ConfigCommandName,
 	}
 
 	var buf bytes.Buffer

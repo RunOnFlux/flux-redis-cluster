@@ -32,7 +32,7 @@ def built_image(project_dir: Path, compose_cmd: list[str]):
     return True
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def running_cluster(project_dir: Path, compose_cmd: list[str], built_image):
     subprocess.run(
         compose_cmd + ["down", "-v", "--remove-orphans"],
@@ -50,13 +50,13 @@ def running_cluster(project_dir: Path, compose_cmd: list[str], built_image):
     time.sleep(10)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def cluster(running_cluster, mock_api, docker_client):
     manager = RedisClusterManager(docker_client)
     manager.wait_for_healthy(timeout=180)
     yield manager
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def mock_api(running_cluster):
     return MockApiClient("http://localhost:8080")

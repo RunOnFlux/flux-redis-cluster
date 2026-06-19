@@ -30,9 +30,6 @@ func (c *Config) SentinelTarget(ip string) (host string, port int) {
 
 // SentinelMasterEndpoint returns the host/port Sentinel should use to monitor the master.
 func (c *Config) SentinelMasterEndpoint(masterIP string) (host string, port int) {
-	if c.MyIP != "" && masterIP == c.MyIP {
-		return "127.0.0.1", c.RedisPort
-	}
 	return masterIP, c.HostRedisPort
 }
 

@@ -8,6 +8,8 @@ tls-ca-cert-file /etc/ssl/cluster/ca/ca.crt
 tls-auth-clients no
 tls-replication yes
 
+sentinel announce-ip {{ .AnnounceIP }}
+sentinel announce-port {{ .AnnounceSentinelPort }}
 
 
 
