@@ -1,9 +1,15 @@
 venv/
 /flux-agent
 cluster.log
+*.log
 *.pyc
 __pycache__/
 .pytest_cache/
+
+# Manual failover / local debug scripts
+manual_failover*.sh
+test_failover_manual.py
+repro.py
 
 # Markdown docs (keep README.md tracked)
 *.md
