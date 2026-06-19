@@ -32,14 +32,22 @@ func runInit(args []string) {
 
 	log.Printf("Discovering cluster IPs for %s via %s", cfg.AppName, cfg.FluxAPIURL)
 	c := fluxapi.New(cfg.FluxAPIURL)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	ips, err := c.ListIPs(ctx, cfg.AppName)
-	cancel()
-
-	if err != nil {
-		log.Printf("Warning: failed to get IPs from Flux API: %v. Falling back to MY_IP", err)
+	var ips []string
+	var err error
+	for i := 0; i < 5; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ips, err = c.ListIPs(ctx, cfg.AppName)
+		cancel()
+		if err == nil {
+			break
+		}
+		log.Printf("Warning: failed to get IPs from Flux API: %v. Retrying in 2s...", err)
+		time.Sleep(2 * time.Second)
 	}
 
+	if err != nil {
+		log.Printf("Failed to get IPs from Flux API after retries. Falling back to MY_IP")
+	}
 	have := false
 	for _, ip := range ips {
 		if ip == cfg.MyIP {

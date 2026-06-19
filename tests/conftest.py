@@ -51,7 +51,7 @@ def running_cluster(project_dir: Path, compose_cmd: list[str], built_image):
 
 
 @pytest.fixture(scope="module")
-def cluster(running_cluster, docker_client):
+def cluster(running_cluster, mock_api, docker_client):
     manager = RedisClusterManager(docker_client)
     manager.wait_for_healthy(timeout=180)
     yield manager

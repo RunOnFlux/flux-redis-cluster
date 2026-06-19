@@ -7,6 +7,7 @@ Verify that the 3-node Redis Sentinel cluster starts correctly:
   3. Data written on one node replicates to all others.
 """
 
+import time
 import redis as redis_lib
 import pytest
 
@@ -16,6 +17,7 @@ from tests.helpers.cluster import BASE_NODES, RedisClusterManager
 def test_all_nodes_reachable(cluster: RedisClusterManager):
     """Verify we can connect to all 3 proxy ports and SET/GET a key."""
     for node_name, cfg in BASE_NODES.items():
+        cluster.wait_for_proxy_ready(cfg.proxy_host_port)
         client = cluster.get_proxy_client(cfg.proxy_host_port)
         key = f"reachable_test_{node_name}"
         assert client.set(key, "hello") is True, (
@@ -37,13 +39,26 @@ def test_single_master_elected(cluster: RedisClusterManager):
     masters = []
     replicas = []
     for node_name, cfg in BASE_NODES.items():
-        client = cluster.get_proxy_client(cfg.proxy_host_port)
-        role_info = client.role()
-        role = role_info[0]  # 'master' or 'slave'
+        role_cmd = (
+            "redis-cli -p 6379 -a {password} "
+            "--tls "
+            "--cert /etc/ssl/cluster/redis/server.crt "
+            "--key /etc/ssl/cluster/redis/server.key "
+            "--cacert /etc/ssl/cluster/ca/ca.crt "
+            "ROLE"
+        ).format(password="secret")
+        
+        exit_code, output = cluster.exec_in_container(node_name, role_cmd)
+        role = "unknown"
+        if exit_code == 0:
+            lines = [l.strip() for l in output.strip().splitlines() if not l.startswith("Warning:")]
+            if lines:
+                role = lines[0]
+
         print(f"  {node_name} ({cfg.ip}): role={role}")
         if role == "master":
             masters.append(node_name)
-        else:
+        elif role == "slave":
             replicas.append(node_name)
 
     assert len(masters) == 1, f"Expected 1 master, found {len(masters)}: {masters}"
@@ -60,6 +75,7 @@ def test_data_replication(cluster: RedisClusterManager):
     # Read from all proxies — since proxies all route to the master,
     # reads also go to the master and should see the key immediately
     for node_name, cfg in BASE_NODES.items():
+        cluster.wait_for_proxy_ready(cfg.proxy_host_port)
         reader = cluster.get_proxy_client(cfg.proxy_host_port)
         value = reader.get("replication_test")
         assert value == "replicated_value", (

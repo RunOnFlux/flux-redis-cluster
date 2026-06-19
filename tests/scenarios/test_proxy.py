@@ -18,6 +18,7 @@ from tests.helpers.cluster import BASE_NODES, RedisClusterManager
 def test_proxy_routes_writes_from_any_node(cluster: RedisClusterManager):
     """Connect to each proxy port, write a unique key — all should succeed."""
     for node_name, cfg in BASE_NODES.items():
+        cluster.wait_for_proxy_ready(cfg.proxy_host_port)
         client = cluster.get_proxy_client(cfg.proxy_host_port)
         key = f"proxy_write_{node_name}"
         value = f"from_{node_name}"

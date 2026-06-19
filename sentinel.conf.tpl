@@ -12,6 +12,7 @@ tls-replication yes
 
 
 dir /var/lib/redis/data
+loglevel debug
 
 # Master info will be configured by flux-agent
 sentinel monitor {{ .ClusterName }} {{ .MasterIP }} 6379 2
@@ -19,5 +20,6 @@ sentinel auth-pass {{ .ClusterName }} {{ .RedisPassword }}
 sentinel down-after-milliseconds {{ .ClusterName }} 5000
 sentinel failover-timeout {{ .ClusterName }} 10000
 sentinel parallel-syncs {{ .ClusterName }} 1
+sentinel rename-command {{ .ClusterName }} CONFIG {{ .ConfigCommandName }}
 
 requirepass {{ .SentinelPassword }}

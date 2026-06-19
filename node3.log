@@ -1,0 +1,392 @@
+==============================================================================
+SSL CERTIFICATE GENERATION
+==============================================================================
+Certificate directory: /etc/ssl/cluster
+Certificate validity: 3650 days
+Time: Fri Jun 19 16:22:47 UTC 2026
+Cluster name: flux-redis-cluster
+Node IP: 172.20.0.12
+Cluster IPs: 172.20.0.10 172.20.0.11 172.20.0.12
+==============================================================================
+GENERATING ROOT CA
+==============================================================================
+Generating deterministic key for service: ca
+Generated key: /etc/ssl/cluster/ca/ca.key
+==============================================================================
+GENERATING REDIS CERTIFICATES
+==============================================================================
+Generating deterministic key for service: redis-server
+Generated key: /etc/ssl/cluster/redis/server.key
+Signed certificate: /etc/ssl/cluster/redis/server.crt
+==============================================================================
+GENERATING SENTINEL CERTIFICATES
+==============================================================================
+Generating deterministic key for service: redis-sentinel
+Generated key: /etc/ssl/cluster/sentinel/server.key
+Signed certificate: /etc/ssl/cluster/sentinel/server.crt
+==============================================================================
+GENERATING PROXY CERTIFICATES
+==============================================================================
+Generating deterministic key for service: redis-proxy
+Generated key: /etc/ssl/cluster/proxy/server.key
+Signed certificate: /etc/ssl/cluster/proxy/server.crt
+==============================================================================
+SETTING PERMISSIONS
+==============================================================================
+Certificate generation completed successfully!
+==============================================================================
+2026-06-19 16:22:51,846 INFO Included extra file "/etc/supervisor/conf.d/supervisord.conf" during parsing
+2026-06-19 16:22:51,846 INFO Set uid to user 0 succeeded
+2026-06-19 16:22:51,874 INFO RPC interface 'supervisor' initialized
+2026-06-19 16:22:51,874 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2026-06-19 16:22:51,875 INFO supervisord started with pid 1
+2026-06-19 16:22:52,884 INFO spawned: 'redis' with pid 102
+2026-06-19 16:22:52,890 INFO spawned: 'sentinel' with pid 103
+2026-06-19 16:22:52,900 INFO spawned: 'updater' with pid 104
+2026-06-19 16:22:52,906 INFO spawned: 'proxy' with pid 105
+2026-06-19 16:22:52,938 DEBG 'redis' stdout output:
+102:C 19 Jun 2026 16:22:52.936 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+102:C 19 Jun 2026 16:22:52.936 # Redis version=6.0.16, bits=64, commit=00000000, modified=0, pid=102, just started
+102:C 19 Jun 2026 16:22:52.936 # Configuration loaded
+
+2026-06-19 16:22:52,940 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:22:52.940 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+
+2026-06-19 16:22:52,940 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:22:52.940 # Redis version=6.0.16, bits=64, commit=00000000, modified=0, pid=103, just started
+
+2026-06-19 16:22:52,940 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:22:52.940 # Configuration loaded
+
+2026-06-19 16:22:52,960 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:22:52.957 * Running mode=standalone, port=6379.
+102:S 19 Jun 2026 16:22:52.957 # Server initialized
+102:S 19 Jun 2026 16:22:52.957 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+102:S 19 Jun 2026 16:22:52.958 * Ready to accept connections
+102:S 19 Jun 2026 16:22:52.958 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:22:52.959 * MASTER <-> REPLICA sync started
+102:S 19 Jun 2026 16:22:52.959 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:22:52,960 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:22:52.959 * Running mode=sentinel, port=26379.
+
+2026-06-19 16:22:52,978 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:22:52.977 # Sentinel ID is 4354ef1321a05b99960b3e8bb5cfce3702aef45a
+103:X 19 Jun 2026 16:22:52.977 # +monitor master flux-redis-cluster 172.20.0.10 6379 quorum 2
+
+2026-06-19 16:22:53,980 INFO success: redis entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-06-19 16:22:53,980 INFO success: sentinel entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-06-19 16:22:53,980 INFO success: updater entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-06-19 16:22:53,980 INFO success: proxy entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-06-19 16:22:53,981 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:22:53.980 * Connecting to MASTER 172.20.0.10:6379
+
+2026-06-19 16:22:53,981 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:22:53.981 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:22:53,988 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:22:53.986 * Non blocking connect for SYNC fired the event.
+
+2026-06-19 16:22:53,989 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:22:53.988 * Master replied to PING, replication can continue...
+
+2026-06-19 16:22:53,995 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:22:53.991 * Partial resynchronization not possible (no cached master)
+
+2026-06-19 16:22:53,998 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:22:53.997 * Full resync from master: 0ec30c9c90c3bc573f613ae24caf38ff3f3bf1db:0
+
+2026-06-19 16:22:54,088 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:22:54.088 * MASTER <-> REPLICA sync: receiving 176 bytes from master to disk
+102:S 19 Jun 2026 16:22:54.088 * MASTER <-> REPLICA sync: Flushing old data
+
+2026-06-19 16:22:54,098 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:22:54.097 * MASTER <-> REPLICA sync: Loading DB in memory
+
+2026-06-19 16:22:54,123 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:22:54.119 * Loading RDB produced by version 6.0.16
+102:S 19 Jun 2026 16:22:54.119 * RDB age 1 seconds
+102:S 19 Jun 2026 16:22:54.120 * RDB memory usage when created 1.97 Mb
+102:S 19 Jun 2026 16:22:54.120 * MASTER <-> REPLICA sync: Finished with success
+
+2026-06-19 16:22:54,128 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:22:54.127 * Background append only file rewriting started by pid 116
+
+2026-06-19 16:22:54,179 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:22:54.179 * AOF rewrite child asks to stop sending diffs.
+116:C 19 Jun 2026 16:22:54.179 * Parent agreed to stop sending diffs. Finalizing AOF...
+116:C 19 Jun 2026 16:22:54.179 * Concatenating 0.00 MB of AOF diff received from parent.
+
+2026-06-19 16:22:54,186 DEBG 'redis' stdout output:
+116:C 19 Jun 2026 16:22:54.182 * SYNC append only file rewrite performed
+116:C 19 Jun 2026 16:22:54.183 * AOF rewrite: 0 MB of memory used by copy-on-write
+
+2026-06-19 16:22:54,187 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:22:54.186 * Background AOF rewrite terminated with success
+102:S 19 Jun 2026 16:22:54.186 * Residual parent diff successfully flushed to the rewritten AOF (0.00 MB)
+102:S 19 Jun 2026 16:22:54.186 * Background AOF rewrite finished successfully
+
+2026-06-19 16:22:55,110 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:22:55.109 * +sentinel sentinel b579afee836d4ddc185c877acedaea85a40463c7 172.20.0.10 26379 @ flux-redis-cluster 172.20.0.10 6379
+
+2026-06-19 16:22:55,471 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:22:55.466 * +sentinel sentinel e20be5fedf0ea6ed8f4ce7d47973658fe6a4536b 172.20.0.11 26379 @ flux-redis-cluster 172.20.0.10 6379
+
+2026-06-19 16:23:03,010 DEBG 'proxy' stderr output:
+2026/06/19 16:23:02 Starting flux-agent proxy on :6380
+
+2026-06-19 16:23:03,038 DEBG 'proxy' stderr output:
+2026/06/19 16:23:03 proxy: master changed: "" -> "172.20.0.10"
+
+2026-06-19 16:23:03,140 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:03.140 * +slave slave 172.20.0.11:6379 172.20.0.11 6379 @ flux-redis-cluster 172.20.0.10 6379
+
+2026-06-19 16:23:03,159 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:03.157 * +slave slave 172.20.0.12:6379 172.20.0.12 6379 @ flux-redis-cluster 172.20.0.10 6379
+
+2026-06-19 16:23:07,959 DEBG 'updater' stderr output:
+2026/06/19 16:23:07 Starting updater daemon for flux-redis-cluster
+
+2026-06-19 16:23:09,770 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:23:09.766 # Connection with master lost.
+102:S 19 Jun 2026 16:23:09.766 * Caching the disconnected master state.
+
+2026-06-19 16:23:10,273 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:23:10.273 * Connecting to MASTER 172.20.0.10:6379
+
+2026-06-19 16:23:10,273 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:23:10.273 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:23:15,870 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:15.866 # +sdown master flux-redis-cluster 172.20.0.10 6379
+
+2026-06-19 16:23:16,014 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:16.014 # +sdown sentinel b579afee836d4ddc185c877acedaea85a40463c7 172.20.0.10 26379 @ flux-redis-cluster 172.20.0.10 6379
+
+2026-06-19 16:23:16,354 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:16.354 # +new-epoch 1
+
+2026-06-19 16:23:16,467 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:16.455 # +vote-for-leader e20be5fedf0ea6ed8f4ce7d47973658fe6a4536b 1
+
+2026-06-19 16:23:16,998 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:16.998 # +odown master flux-redis-cluster 172.20.0.10 6379 #quorum 2/2
+103:X 19 Jun 2026 16:23:16.998 # Next failover delay: I will not start a failover before Fri Jun 19 16:23:36 2026
+
+2026-06-19 16:23:36,799 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:36.798 # +new-epoch 2
+103:X 19 Jun 2026 16:23:36.798 # +try-failover master flux-redis-cluster 172.20.0.10 6379
+
+2026-06-19 16:23:36,850 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:36.850 # +vote-for-leader 4354ef1321a05b99960b3e8bb5cfce3702aef45a 2
+
+2026-06-19 16:23:36,901 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:36.900 # e20be5fedf0ea6ed8f4ce7d47973658fe6a4536b voted for e20be5fedf0ea6ed8f4ce7d47973658fe6a4536b 2
+
+2026-06-19 16:23:47,161 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:47.160 # -failover-abort-not-elected master flux-redis-cluster 172.20.0.10 6379
+
+2026-06-19 16:23:47,254 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:47.252 # Next failover delay: I will not start a failover before Fri Jun 19 16:23:57 2026
+
+2026-06-19 16:23:57,091 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:57.091 # +new-epoch 3
+103:X 19 Jun 2026 16:23:57.091 # +try-failover master flux-redis-cluster 172.20.0.10 6379
+
+2026-06-19 16:23:57,113 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:57.111 # +vote-for-leader 4354ef1321a05b99960b3e8bb5cfce3702aef45a 3
+
+2026-06-19 16:23:57,177 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:57.176 # e20be5fedf0ea6ed8f4ce7d47973658fe6a4536b voted for 4354ef1321a05b99960b3e8bb5cfce3702aef45a 3
+
+2026-06-19 16:23:57,202 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:57.202 # +elected-leader master flux-redis-cluster 172.20.0.10 6379
+103:X 19 Jun 2026 16:23:57.202 # +failover-state-select-slave master flux-redis-cluster 172.20.0.10 6379
+
+2026-06-19 16:23:57,268 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:57.268 # +selected-slave slave 172.20.0.11:6379 172.20.0.11 6379 @ flux-redis-cluster 172.20.0.10 6379
+103:X 19 Jun 2026 16:23:57.268 * +failover-state-send-slaveof-noone slave 172.20.0.11:6379 172.20.0.11 6379 @ flux-redis-cluster 172.20.0.10 6379
+
+2026-06-19 16:23:57,338 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:23:57.337 * +failover-state-wait-promotion slave 172.20.0.11:6379 172.20.0.11 6379 @ flux-redis-cluster 172.20.0.10 6379
+
+2026-06-19 16:24:07,360 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:24:07.359 # -failover-abort-slave-timeout master flux-redis-cluster 172.20.0.10 6379
+
+2026-06-19 16:24:07,471 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:24:07.459 # Next failover delay: I will not start a failover before Fri Jun 19 16:24:18 2026
+
+2026-06-19 16:24:11,240 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:11.240 # Timeout connecting to the MASTER...
+102:S 19 Jun 2026 16:24:11.240 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:24:11.240 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:11,760 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:11.760 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:12,280 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:12.279 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:24:12.279 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:14,891 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:14.889 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:15,512 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:15.511 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:24:15.512 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:17,596 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:24:17.595 # +new-epoch 4
+
+2026-06-19 16:24:17,626 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:24:17.626 # +vote-for-leader e20be5fedf0ea6ed8f4ce7d47973658fe6a4536b 4
+103:X 19 Jun 2026 16:24:17.626 # Next failover delay: I will not start a failover before Fri Jun 19 16:24:38 2026
+
+2026-06-19 16:24:17,957 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:17.956 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:18,625 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:18.624 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:24:18.624 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:21,223 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:21.105 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:21,763 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:21.761 * Connecting to MASTER 172.20.0.10:6379
+
+2026-06-19 16:24:21,765 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:21.763 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:24,232 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:24.231 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:24,900 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:24.897 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:24:24.897 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:27,368 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:27.367 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:27,985 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:27.984 * Connecting to MASTER 172.20.0.10:6379
+
+2026-06-19 16:24:27,987 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:27.985 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:30,444 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:30.443 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:31,127 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:31.126 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:24:31.126 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:33,573 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:33.572 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:34,323 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:34.323 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:24:34.323 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:36,710 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:36.709 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:37,500 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:37.500 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:24:37.500 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:38,240 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:24:38.238 # +new-epoch 5
+
+2026-06-19 16:24:38,273 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:24:38.273 # +vote-for-leader e20be5fedf0ea6ed8f4ce7d47973658fe6a4536b 5
+103:X 19 Jun 2026 16:24:38.273 # Next failover delay: I will not start a failover before Fri Jun 19 16:24:58 2026
+
+2026-06-19 16:24:39,789 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:39.787 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:40,843 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:40.795 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:24:40.795 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:42,918 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:42.917 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:42,936 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:42.935 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:24:42.936 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:45,990 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:45.989 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:46,013 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:46.012 * Connecting to MASTER 172.20.0.10:6379
+
+2026-06-19 16:24:46,014 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:46.014 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:49,132 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:49.098 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:49,386 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:49.367 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:24:49.367 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:52,223 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:52.223 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:52,699 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:52.699 * Connecting to MASTER 172.20.0.10:6379
+
+2026-06-19 16:24:52,700 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:52.699 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:55,359 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:55.358 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:55,853 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:55.853 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:24:55.853 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:24:58,470 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:58.469 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:24:58,776 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:24:58.772 # +new-epoch 6
+
+2026-06-19 16:24:58,873 DEBG 'sentinel' stdout output:
+103:X 19 Jun 2026 16:24:58.872 # +vote-for-leader e20be5fedf0ea6ed8f4ce7d47973658fe6a4536b 6
+103:X 19 Jun 2026 16:24:58.872 # Next failover delay: I will not start a failover before Fri Jun 19 16:25:18 2026
+
+2026-06-19 16:24:58,977 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:24:58.975 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:24:58.975 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:25:01,691 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:25:01.691 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:25:02,470 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:25:02.470 * Connecting to MASTER 172.20.0.10:6379
+
+2026-06-19 16:25:02,470 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:25:02.470 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:25:05,045 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:25:05.045 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:25:05,319 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:25:05.319 * Connecting to MASTER 172.20.0.10:6379
+
+2026-06-19 16:25:05,380 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:25:05.345 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:25:08,132 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:25:08.132 # Error condition on socket for SYNC: (null)
+
+2026-06-19 16:25:08,740 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:25:08.738 * Connecting to MASTER 172.20.0.10:6379
+102:S 19 Jun 2026 16:25:08.739 * MASTER <-> REPLICA sync started
+
+2026-06-19 16:25:11,336 DEBG 'redis' stdout output:
+102:S 19 Jun 2026 16:25:11.336 # Error condition on socket for SYNC: (null)
+

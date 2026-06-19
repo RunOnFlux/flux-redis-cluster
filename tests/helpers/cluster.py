@@ -86,14 +86,15 @@ class RedisClusterManager:
                 exit_code, output = self.exec_in_container(node_name, sentinel_cmd)
                 if exit_code != 0:
                     continue
-                # Output looks like:
+                # Output may include warning lines like:
+                #   Warning: Using a password with '-a' ...
                 #   172.20.0.10
                 #   6379
-                lines = output.strip().splitlines()
-                if len(lines) >= 1:
-                    ip = lines[0].strip()
-                    if ip.startswith("172."):
-                        return ip
+                # Scan all lines for one that looks like an IP.
+                for line in output.strip().splitlines():
+                    line = line.strip()
+                    if line and line[0].isdigit() and "." in line:
+                        return line
             except Exception:
                 continue
         return None
@@ -142,9 +143,38 @@ class RedisClusterManager:
                 except Exception:
                     pass
 
-            if reachable >= expected_nodes:
+            if reachable < expected_nodes:
+                time.sleep(5)
+                continue
+
+            masters = 0
+            slaves = 0
+            for node_name in list(BASE_NODES)[:expected_nodes]:
+                role_cmd = (
+                    "redis-cli -p 6379 -a secret "
+                    "--tls "
+                    "--cert /etc/ssl/cluster/redis/server.crt "
+                    "--key /etc/ssl/cluster/redis/server.key "
+                    "--cacert /etc/ssl/cluster/ca/ca.crt "
+                    "ROLE"
+                )
+                try:
+                    exit_code, output = self.exec_in_container(node_name, role_cmd)
+                    if exit_code == 0:
+                        lines = [l.strip() for l in output.strip().splitlines() if not l.startswith("Warning:")]
+                        if lines:
+                            role = lines[0]
+                            if role == "master":
+                                masters += 1
+                            elif role == "slave":
+                                slaves += 1
+                except Exception:
+                    pass
+
+            if masters == 1 and slaves == expected_nodes - 1:
                 return True
 
+            print(f"  [wait_for_healthy] reachable={reachable}, masters={masters}, slaves={slaves}")
             time.sleep(5)
 
         raise TimeoutError(
@@ -168,6 +198,20 @@ class RedisClusterManager:
         raise TimeoutError(
             f"Master did not change from {old_master_ip} within {timeout}s"
         )
+
+    def wait_for_proxy_ready(self, host_port: int, timeout: int = 60) -> None:
+        """Poll the proxy until it successfully responds to a PING."""
+        deadline = time.time() + timeout
+        last_err: Exception | None = None
+        while time.time() < deadline:
+            try:
+                client = self.get_proxy_client(host_port)
+                client.ping()
+                return
+            except Exception as e:
+                last_err = e
+                time.sleep(2)
+        raise TimeoutError(f"Proxy on port {host_port} did not become ready: {last_err}")
 
     # ── Container lifecycle ───────────────────────────────────────────
 

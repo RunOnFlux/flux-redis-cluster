@@ -1,4 +1,6 @@
 services:
   mock-api:
     environment:
-      INITIAL_NODES_FILE: ""
+      INITIAL_NODES_FILE: "/app/initial-nodes.json"
+    volumes:
+      - ./tests/initial-nodes.json:/app/initial-nodes.json:ro
