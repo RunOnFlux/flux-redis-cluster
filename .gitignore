@@ -4,3 +4,9 @@ cluster.log
 *.pyc
 __pycache__/
 .pytest_cache/
+
+# Markdown docs (keep README.md tracked)
+*.md
+!README.md
+**/*.md
+!README.md

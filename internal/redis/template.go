@@ -2,6 +2,7 @@ package redis
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"text/template"
 
@@ -11,6 +12,7 @@ import (
 type TemplateData struct {
 	ClusterName       string
 	MasterIP          string
+	MasterPort        int
 	RedisPassword     string
 	SentinelPassword  string
 	ConfigCommandName string
@@ -27,9 +29,11 @@ func RenderConfig(inPath, outPath string, cfg *config.Config, masterIP string) e
 		return err
 	}
 
+	masterHost, masterPort := cfg.SentinelMasterEndpoint(masterIP)
 	td := TemplateData{
 		ClusterName:       cfg.AppName,
-		MasterIP:          masterIP,
+		MasterIP:          masterHost,
+		MasterPort:        masterPort,
 		RedisPassword:     cfg.RedisPassword,
 		SentinelPassword:  cfg.SentinelPassword,
 		ConfigCommandName: cfg.ConfigCommandName,
@@ -42,7 +46,7 @@ func RenderConfig(inPath, outPath string, cfg *config.Config, masterIP string) e
 
 	// Add replicaof directive if we are not the master
 	if masterIP != cfg.MyIP && outPath == "/etc/redis/redis.conf" {
-		buf.WriteString("\nreplicaof " + masterIP + " 6379\n")
+		buf.WriteString(fmt.Sprintf("\nreplicaof %s %d\n", masterIP, cfg.HostRedisPort))
 	}
 
 	return os.WriteFile(outPath, buf.Bytes(), 0644)

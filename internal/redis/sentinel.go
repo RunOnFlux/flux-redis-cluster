@@ -8,10 +8,12 @@ import (
 	"os"
 	"time"
 
+	"flux-redis-cluster/internal/config"
+
 	"github.com/redis/go-redis/v9"
 )
 
-func GetMasterFromSentinels(ips []string, appName string, password string) (string, error) {
+func GetMasterFromSentinels(cfg *config.Config, ips []string) (string, error) {
 	caCert, err := os.ReadFile("/etc/ssl/cluster/ca/ca.crt")
 	if err != nil {
 		return "", fmt.Errorf("read ca cert: %v", err)
@@ -31,14 +33,15 @@ func GetMasterFromSentinels(ips []string, appName string, password string) (stri
 	}
 
 	for _, ip := range ips {
+		host, port := cfg.SentinelTarget(ip)
 		client := redis.NewSentinelClient(&redis.Options{
-			Addr:      fmt.Sprintf("%s:26379", ip),
-			Password:  password,
+			Addr:      fmt.Sprintf("%s:%d", host, port),
+			Password:  cfg.SentinelPassword,
 			TLSConfig: tlsConfig,
 		})
 
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		masterAddr, err := client.GetMasterAddrByName(ctx, appName).Result()
+		masterAddr, err := client.GetMasterAddrByName(ctx, cfg.AppName).Result()
 		cancel()
 		client.Close()
 

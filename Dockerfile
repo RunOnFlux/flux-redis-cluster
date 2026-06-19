@@ -3,7 +3,7 @@ WORKDIR /src
 COPY go.mod go.sum* ./
 RUN go mod download 2>/dev/null || true
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w -X main.version=1.0.0" -o /out/flux-agent ./cmd/flux-agent
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w -X main.version=$(cat VERSION)" -o /out/flux-agent ./cmd/flux-agent
 
 FROM ubuntu:22.04
 
@@ -38,6 +38,7 @@ COPY redis.conf.tpl /app/redis.conf.tpl
 COPY sentinel.conf.tpl /app/sentinel.conf.tpl
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY generate-certs.sh /app/generate-certs.sh
+COPY VERSION /app/VERSION
 
 # Copy Go binary
 COPY --from=gobuild /out/flux-agent /app/flux-agent
@@ -52,4 +53,4 @@ WORKDIR /app
 EXPOSE 6379 26379 6380
 
 # Run init then start supervisord
-CMD ["/bin/bash", "-c", "/app/flux-agent init && supervisord -n"]
+CMD ["/bin/bash", "-c", "/app/flux-agent version && /app/flux-agent init && supervisord -n"]

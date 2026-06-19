@@ -13,7 +13,7 @@ import (
 )
 
 func runDaemon(args []string) {
-	cfg := config.FromEnv()
+	cfg := config.Load()
 
 	localClient, err := redis.NewLocalClient(cfg.RedisPassword, cfg.SentinelPassword)
 	if err != nil {

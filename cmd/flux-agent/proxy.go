@@ -22,7 +22,7 @@ func runProxy(args []string) {
 	listenAddr := fs.String("listen", ":6380", "listen address")
 	_ = fs.Parse(args)
 
-	cfg := config.FromEnv()
+	cfg := config.Load()
 	localClient, err := redis.NewLocalClient(cfg.RedisPassword, cfg.SentinelPassword)
 	if err != nil {
 		log.Fatalf("proxy: failed to init local redis client: %v", err)
@@ -78,7 +78,7 @@ func runProxy(args []string) {
 				continue
 			}
 		}
-		go handleProxyConn(conn, primaryIP.Load().(string), cfg.MyIP)
+		go handleProxyConn(conn, primaryIP.Load().(string), cfg)
 	}
 }
 
@@ -98,19 +98,15 @@ func probeMaster(ctx context.Context, cfg *config.Config, client *redis.LocalCli
 	}
 }
 
-func handleProxyConn(client net.Conn, primaryIP, myIP string) {
+func handleProxyConn(client net.Conn, primaryIP string, cfg *config.Config) {
 	defer client.Close()
 	if primaryIP == "" {
 		log.Printf("proxy: rejecting connection from %s - no master known yet", client.RemoteAddr())
 		return
 	}
 
-	dialHost := primaryIP
-	if myIP != "" && primaryIP == myIP {
-		dialHost = "127.0.0.1"
-	}
-
-	target := fmt.Sprintf("%s:6379", dialHost)
+	host, port := cfg.RedisTarget(primaryIP)
+	target := fmt.Sprintf("%s:%d", host, port)
 	upstream, err := net.DialTimeout("tcp", target, 5*time.Second)
 	if err != nil {
 		log.Printf("proxy: dial %s failed: %v", target, err)

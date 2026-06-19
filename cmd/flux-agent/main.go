@@ -20,7 +20,7 @@ Subcommands:
   proxy        Run TCP proxy routing writes to the current Redis master
   version      Print version and exit
   help         Print this help message
-`, version)
+`, agentVersion())
 }
 
 func main() {
@@ -30,13 +30,16 @@ func main() {
 	}
 	switch os.Args[1] {
 	case "init":
+		logAgentVersion("init")
 		runInit(os.Args[2:])
 	case "daemon":
+		logAgentVersion("daemon")
 		runDaemon(os.Args[2:])
 	case "proxy":
+		logAgentVersion("proxy")
 		runProxy(os.Args[2:])
 	case "version", "--version", "-v":
-		fmt.Println(version)
+		fmt.Println(agentVersion())
 	case "help", "--help", "-h":
 		usage()
 	default:
