@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -65,6 +66,58 @@ func NewLocalClient(redisPassword, sentinelPassword string) (*LocalClient, error
 
 func (c *LocalClient) ResetSentinel(ctx context.Context, appName string) error {
 	return c.sentinel.Do(ctx, "SENTINEL", "RESET", appName).Err()
+}
+
+func (c *LocalClient) SentinelKnownIPs(ctx context.Context, appName string) ([]string, error) {
+	seen := map[string]bool{}
+
+	master, err := c.sentinel.Do(ctx, "SENTINEL", "master", appName).Result()
+	if err != nil {
+		return nil, err
+	}
+	if fields, ok := master.([]interface{}); ok {
+		addSentinelIP(seen, fields)
+	} else {
+		return nil, fmt.Errorf("invalid SENTINEL master response")
+	}
+
+	for _, cmd := range []string{"replicas", "sentinels"} {
+		res, err := c.sentinel.Do(ctx, "SENTINEL", cmd, appName).Result()
+		if err != nil {
+			return nil, err
+		}
+		items, ok := res.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("invalid SENTINEL %s response", cmd)
+		}
+		for _, item := range items {
+			fields, ok := item.([]interface{})
+			if !ok {
+				continue
+			}
+			addSentinelIP(seen, fields)
+		}
+	}
+
+	out := make([]string, 0, len(seen))
+	for ip := range seen {
+		out = append(out, ip)
+	}
+	sort.Strings(out)
+	return out, nil
+}
+
+func addSentinelIP(seen map[string]bool, fields []interface{}) {
+	for i := 0; i+1 < len(fields); i += 2 {
+		key, _ := fields[i].(string)
+		if key != "ip" {
+			continue
+		}
+		ip, _ := fields[i+1].(string)
+		if ip != "" {
+			seen[ip] = true
+		}
+	}
 }
 
 func (c *LocalClient) EnsureReplicaOf(ctx context.Context, configCmdName, masterIP string) error {

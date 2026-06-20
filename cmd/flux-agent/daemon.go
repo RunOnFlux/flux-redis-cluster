@@ -5,6 +5,7 @@ import (
 	"log"
 	"reflect"
 	"sort"
+	"strings"
 	"time"
 
 	"flux-redis-cluster/internal/config"
@@ -40,32 +41,22 @@ func runDaemon(args []string) {
 			if len(knownIPs) > 0 && !reflect.DeepEqual(knownIPs, ips) {
 				log.Printf("Topology changed: %v -> %v", knownIPs, ips)
 
-				removed := false
-				for _, kip := range knownIPs {
-					found := false
-					for _, ip := range ips {
-						if ip == kip {
-							found = true
-							break
-						}
-					}
-					if !found {
-						removed = true
-						break
-					}
-				}
-
-				if removed {
+				if hasRemovedIP(knownIPs, ips) {
 					log.Printf("Node(s) removed. Resetting local Sentinel state...")
-					sCtx, sCancel := context.WithTimeout(context.Background(), 5*time.Second)
-					if err := localClient.ResetSentinel(sCtx, cfg.AppName); err != nil {
-						log.Printf("Error resetting Sentinel: %v", err)
-					} else {
-						log.Printf("Sentinel reset successfully")
-					}
-					sCancel()
+					resetLocalSentinel(localClient, cfg.AppName)
 				}
 			}
+
+			sCtx, sCancel := context.WithTimeout(context.Background(), 5*time.Second)
+			sentinelIPs, sentinelErr := localClient.SentinelKnownIPs(sCtx, cfg.AppName)
+			sCancel()
+			if sentinelErr != nil {
+				log.Printf("Failed to inspect local Sentinel state: %v", sentinelErr)
+			} else if stale := staleIPs(sentinelIPs, ips); len(stale) > 0 {
+				log.Printf("Local Sentinel has stale node IP(s) not in Flux locations: %s. Resetting local Sentinel state...", strings.Join(stale, ", "))
+				resetLocalSentinel(localClient, cfg.AppName)
+			}
+
 			knownIPs = ips
 		}
 
@@ -73,4 +64,34 @@ func runDaemon(args []string) {
 
 		<-ticker.C
 	}
+}
+
+func resetLocalSentinel(localClient *redis.LocalClient, appName string) {
+	sCtx, sCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer sCancel()
+	if err := localClient.ResetSentinel(sCtx, appName); err != nil {
+		log.Printf("Error resetting Sentinel: %v", err)
+	} else {
+		log.Printf("Sentinel reset successfully")
+	}
+}
+
+func hasRemovedIP(oldIPs, newIPs []string) bool {
+	return len(staleIPs(oldIPs, newIPs)) > 0
+}
+
+func staleIPs(candidateIPs, currentIPs []string) []string {
+	current := map[string]bool{}
+	for _, ip := range currentIPs {
+		current[ip] = true
+	}
+
+	var stale []string
+	for _, ip := range candidateIPs {
+		if !current[ip] {
+			stale = append(stale, ip)
+		}
+	}
+	sort.Strings(stale)
+	return stale
 }
