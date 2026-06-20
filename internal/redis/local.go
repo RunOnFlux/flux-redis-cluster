@@ -68,6 +68,26 @@ func (c *LocalClient) ResetSentinel(ctx context.Context, appName string) error {
 	return c.sentinel.Do(ctx, "SENTINEL", "RESET", appName).Err()
 }
 
+func (c *LocalClient) PingRedis(ctx context.Context) error {
+	return c.redis.Ping(ctx).Err()
+}
+
+func (c *LocalClient) PingSentinel(ctx context.Context) error {
+	return c.sentinel.Ping(ctx).Err()
+}
+
+func (c *LocalClient) SentinelMaster(ctx context.Context, appName string) (map[string]string, error) {
+	res, err := c.sentinel.Do(ctx, "SENTINEL", "master", appName).Result()
+	if err != nil {
+		return nil, err
+	}
+	fields, ok := res.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid SENTINEL master response")
+	}
+	return sentinelFields(fields), nil
+}
+
 func (c *LocalClient) SentinelKnownIPs(ctx context.Context, appName string) ([]string, error) {
 	seen := map[string]bool{}
 
@@ -108,16 +128,29 @@ func (c *LocalClient) SentinelKnownIPs(ctx context.Context, appName string) ([]s
 }
 
 func addSentinelIP(seen map[string]bool, fields []interface{}) {
+	parsed := sentinelFields(fields)
+	if ip := parsed["ip"]; ip != "" {
+		seen[ip] = true
+	}
+}
+
+func sentinelFields(fields []interface{}) map[string]string {
+	parsed := map[string]string{}
 	for i := 0; i+1 < len(fields); i += 2 {
 		key, _ := fields[i].(string)
-		if key != "ip" {
+		if key == "" {
 			continue
 		}
-		ip, _ := fields[i+1].(string)
-		if ip != "" {
-			seen[ip] = true
+		switch val := fields[i+1].(type) {
+		case string:
+			parsed[key] = val
+		case []byte:
+			parsed[key] = string(val)
+		default:
+			parsed[key] = fmt.Sprint(val)
 		}
 	}
+	return parsed
 }
 
 func (c *LocalClient) EnsureReplicaOf(ctx context.Context, configCmdName, masterIP string) error {

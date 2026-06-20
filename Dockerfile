@@ -52,5 +52,8 @@ WORKDIR /app
 # 6379 = redis direct, 26379 = sentinel, 6380 = primary-routing proxy
 EXPOSE 6379 26379 6380
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+    CMD /app/flux-agent health || exit 1
+
 # Run init then start supervisord
 CMD ["/bin/bash", "-c", "/app/flux-agent version && /app/flux-agent init && supervisord -n"]

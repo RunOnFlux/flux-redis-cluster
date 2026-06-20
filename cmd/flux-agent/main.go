@@ -18,6 +18,7 @@ Subcommands:
   init         Run one-shot cluster initialization
   daemon       Run the cluster reconciliation loop
   proxy        Run TCP proxy routing writes to the current Redis master
+  health       Check local Redis/Sentinel cluster health
   version      Print version and exit
   help         Print this help message
 `, agentVersion())
@@ -38,6 +39,9 @@ func main() {
 	case "proxy":
 		logAgentVersion("proxy")
 		runProxy(os.Args[2:])
+	case "health":
+		logAgentVersion("health")
+		runHealth(os.Args[2:])
 	case "version", "--version", "-v":
 		fmt.Println(agentVersion())
 	case "help", "--help", "-h":
