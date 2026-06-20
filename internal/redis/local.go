@@ -81,11 +81,7 @@ func (c *LocalClient) SentinelMaster(ctx context.Context, appName string) (map[s
 	if err != nil {
 		return nil, err
 	}
-	fields, ok := res.([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid SENTINEL master response")
-	}
-	return sentinelFields(fields), nil
+	return sentinelFields(res)
 }
 
 func (c *LocalClient) SentinelKnownIPs(ctx context.Context, appName string) ([]string, error) {
@@ -95,10 +91,10 @@ func (c *LocalClient) SentinelKnownIPs(ctx context.Context, appName string) ([]s
 	if err != nil {
 		return nil, err
 	}
-	if fields, ok := master.([]interface{}); ok {
+	if fields, err := sentinelFields(master); err == nil {
 		addSentinelIP(seen, fields)
 	} else {
-		return nil, fmt.Errorf("invalid SENTINEL master response")
+		return nil, err
 	}
 
 	for _, cmd := range []string{"replicas", "sentinels"} {
@@ -111,8 +107,8 @@ func (c *LocalClient) SentinelKnownIPs(ctx context.Context, appName string) ([]s
 			return nil, fmt.Errorf("invalid SENTINEL %s response", cmd)
 		}
 		for _, item := range items {
-			fields, ok := item.([]interface{})
-			if !ok {
+			fields, err := sentinelFields(item)
+			if err != nil {
 				continue
 			}
 			addSentinelIP(seen, fields)
@@ -127,14 +123,36 @@ func (c *LocalClient) SentinelKnownIPs(ctx context.Context, appName string) ([]s
 	return out, nil
 }
 
-func addSentinelIP(seen map[string]bool, fields []interface{}) {
-	parsed := sentinelFields(fields)
-	if ip := parsed["ip"]; ip != "" {
+func addSentinelIP(seen map[string]bool, fields map[string]string) {
+	if ip := fields["ip"]; ip != "" {
 		seen[ip] = true
 	}
 }
 
-func sentinelFields(fields []interface{}) map[string]string {
+func sentinelFields(value interface{}) (map[string]string, error) {
+	switch fields := value.(type) {
+	case []interface{}:
+		return sentinelArrayFields(fields), nil
+	case map[interface{}]interface{}:
+		parsed := map[string]string{}
+		for key, val := range fields {
+			parsed[fmt.Sprint(key)] = fmt.Sprint(val)
+		}
+		return parsed, nil
+	case map[string]interface{}:
+		parsed := map[string]string{}
+		for key, val := range fields {
+			parsed[key] = fmt.Sprint(val)
+		}
+		return parsed, nil
+	case map[string]string:
+		return fields, nil
+	default:
+		return nil, fmt.Errorf("invalid SENTINEL response type %T", value)
+	}
+}
+
+func sentinelArrayFields(fields []interface{}) map[string]string {
 	parsed := map[string]string{}
 	for i := 0; i+1 < len(fields); i += 2 {
 		key, _ := fields[i].(string)
