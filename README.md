@@ -54,7 +54,7 @@ Key Points:
 1. **Deploy on Flux**:
   - Log in to home.runonflux.io and navigate to Applications > Register New App.
   - Add a component for Redis.
-  - Use the built Docker image.
+  - Use the built Docker image: `runonflux/flux-redis-cluster:latest`.
   - Set the Container Data for the component to `/var/lib/redis/data`.
   - Add these ports to the `Cont. Ports` field: `[6379, 26379, 6380]`.
   - Using the `Ports` field, map those ports to new ones, for example: `[16379, 26380, 16380]`.
@@ -196,7 +196,6 @@ Check logs for each component:
 
 ## Related Projects
 
-Other self-configuring, highly-available database clusters built for the [Flux](https://runonflux.io) network using the same architecture:
-
-- **[flux-pg-cluster](https://github.com/RunOnFlux/flux-pg-cluster)** — PostgreSQL cluster with automatic failover via Patroni and dynamic membership via the Flux API.
-- **[flux-mongodb-cluster](https://github.com/RunOnFlux/flux-mongodb-cluster)** — MongoDB replica set cluster with automatic failover and dynamic membership via the Flux API.
+- Flux Postgres Cluster: [https://github.com/RunOnFlux/flux-pg-cluster](https://github.com/RunOnFlux/flux-pg-cluster)
+- Flux MongoDB Cluster: [https://github.com/RunOnFlux/flux-mongodb-cluster](https://github.com/RunOnFlux/flux-mongodb-cluster)
+- Flux Mysql Cluster: [https://github.com/RunOnFlux/Flux-Shared-DB](https://github.com/RunOnFlux/Flux-Shared-DB)
