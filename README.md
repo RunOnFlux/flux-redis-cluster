@@ -193,3 +193,10 @@ Check logs for each component:
 /var/log/supervisor/updater.out.log
 /var/log/supervisor/proxy.out.log
 ```
+
+## Related Projects
+
+Other self-configuring, highly-available database clusters built for the [Flux](https://runonflux.io) network using the same architecture:
+
+- **[flux-pg-cluster](https://github.com/RunOnFlux/flux-pg-cluster)** — PostgreSQL cluster with automatic failover via Patroni and dynamic membership via the Flux API.
+- **[flux-mongodb-cluster](https://github.com/RunOnFlux/flux-mongodb-cluster)** — MongoDB replica set cluster with automatic failover and dynamic membership via the Flux API.
