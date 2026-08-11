@@ -12,7 +12,43 @@ import time
 import redis as redis_lib
 import pytest
 
-from tests.helpers.cluster import BASE_NODES, RedisClusterManager
+from tests.helpers.cluster import (
+    APP_NAME,
+    BASE_NODES,
+    REDIS_PASSWORD,
+    RedisClusterManager,
+)
+from tests.helpers.mock_api import MockApiClient
+
+
+def _sentinel_cli(command: str) -> str:
+    return (
+        "redis-cli -p 26379 -a {password} "
+        "--tls "
+        "--cert /etc/ssl/cluster/sentinel/server.crt "
+        "--key /etc/ssl/cluster/sentinel/server.key "
+        "--cacert /etc/ssl/cluster/ca/ca.crt "
+        "{command}"
+    ).format(password="secret", command=command)
+
+
+def _local_role(cluster: RedisClusterManager, node_name: str) -> str:
+    role_cmd = (
+        "redis-cli -p 6379 -a secret "
+        "--tls "
+        "--cert /etc/ssl/cluster/redis/server.crt "
+        "--key /etc/ssl/cluster/redis/server.key "
+        "--cacert /etc/ssl/cluster/ca/ca.crt ROLE"
+    )
+    exit_code, output = cluster.exec_in_container(node_name, role_cmd)
+    if exit_code != 0:
+        return "unknown"
+    lines = [
+        line.strip()
+        for line in output.splitlines()
+        if line.strip() and not line.startswith("Warning:")
+    ]
+    return lines[0] if lines else "unknown"
 
 
 def test_master_failover_elects_new_master(cluster: RedisClusterManager):
@@ -160,3 +196,77 @@ def test_old_master_rejoins_as_replica(cluster: RedisClusterManager):
     print(f"  ✓ {old_master_name} rejoined as replica")
 
     cluster.wait_for_healthy(timeout=120)
+
+
+def test_permanently_removed_master_bootstraps_freshest_survivor(
+    cluster: RedisClusterManager,
+    mock_api: MockApiClient,
+):
+    """Recover even when Sentinels disagree and the old master never returns."""
+    old_master_ip = cluster.get_master_ip()
+    old_master_name = cluster.get_master_node_name()
+    assert old_master_ip is not None
+    assert old_master_name is not None
+
+    surviving_nodes = [name for name in BASE_NODES if name != old_master_name]
+    surviving_ips = [BASE_NODES[name].ip for name in surviving_nodes]
+
+    # Ensure the replicas contain data worth preserving before isolating the
+    # control plane and permanently removing the old master.
+    writer = cluster.get_proxy_client(BASE_NODES[old_master_name].proxy_host_port)
+    writer.set("permanent_removal_key", "survives")
+    time.sleep(2)
+
+    # Freeze reconciliation while constructing the exact production failure:
+    # every survivor monitors a different, removed master and therefore cannot
+    # form Sentinel quorum on its own.
+    for node_name in surviving_nodes:
+        exit_code, output = cluster.exec_in_container(
+            node_name, "supervisorctl stop updater"
+        )
+        assert exit_code == 0, output
+
+    stale_ips = ["192.0.2.64", "192.0.2.82"]
+    for node_name, stale_ip in zip(surviving_nodes, stale_ips):
+        commands = [
+            f"SENTINEL REMOVE {APP_NAME}",
+            f"SENTINEL MONITOR {APP_NAME} {stale_ip} 6379 2",
+            f"SENTINEL SET {APP_NAME} auth-pass {REDIS_PASSWORD}",
+        ]
+        for command in commands:
+            exit_code, output = cluster.exec_in_container(
+                node_name, _sentinel_cli(command)
+            )
+            assert exit_code == 0, output
+
+    cluster.kill_node(old_master_name)
+    mock_api.set_nodes(surviving_ips)
+
+    for node_name in surviving_nodes:
+        exit_code, output = cluster.exec_in_container(
+            node_name, "supervisorctl start updater"
+        )
+        assert exit_code == 0, output
+
+    deadline = time.time() + 120
+    elected_ip = None
+    while time.time() < deadline:
+        masters = [
+            name for name in surviving_nodes if _local_role(cluster, name) == "master"
+        ]
+        reported = {cluster.get_master_ip()}
+        if len(masters) == 1:
+            candidate_ip = BASE_NODES[masters[0]].ip
+            if reported == {candidate_ip}:
+                elected_ip = candidate_ip
+                break
+        time.sleep(3)
+
+    assert elected_ip in surviving_ips, "survivors did not converge on a new master"
+
+    # Both surviving proxies must route writes to the recovered master, and the
+    # data acknowledged before removal must still be present.
+    for node_name in surviving_nodes:
+        proxy = cluster.get_proxy_client(BASE_NODES[node_name].proxy_host_port)
+        assert proxy.get("permanent_removal_key") == "survives"
+        assert proxy.set(f"recovered_via_{node_name}", "ok") is True

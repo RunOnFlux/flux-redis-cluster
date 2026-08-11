@@ -68,6 +68,46 @@ func (c *LocalClient) ResetSentinel(ctx context.Context, appName string) error {
 	return c.sentinel.Do(ctx, "SENTINEL", "RESET", appName).Err()
 }
 
+// ReconfigureSentinel replaces a stale master monitor with the selected
+// survivor and restores all per-master settings from the rendered template.
+func (c *LocalClient) ReconfigureSentinel(
+	ctx context.Context,
+	appName, masterIP string,
+	masterPort, quorum int,
+	redisPassword, configCommandName string,
+) error {
+	if err := c.sentinel.Do(ctx, "SENTINEL", "REMOVE", appName).Err(); err != nil {
+		return fmt.Errorf("remove stale monitor: %w", err)
+	}
+	if err := c.sentinel.Do(ctx, "SENTINEL", "MONITOR", appName, masterIP, masterPort, quorum).Err(); err != nil {
+		return fmt.Errorf("monitor recovery master: %w", err)
+	}
+
+	settings := [][]interface{}{
+		{"auth-pass", redisPassword},
+		{"down-after-milliseconds", 5000},
+		{"failover-timeout", 10000},
+		{"parallel-syncs", 1},
+	}
+	for _, setting := range settings {
+		args := []interface{}{"SENTINEL", "SET", appName}
+		args = append(args, setting...)
+		if err := c.sentinel.Do(ctx, args...).Err(); err != nil {
+			return fmt.Errorf("restore Sentinel setting %v: %w", setting[0], err)
+		}
+	}
+	if configCommandName != "" && configCommandName != "CONFIG" {
+		if err := c.sentinel.Do(
+			ctx,
+			"SENTINEL", "SET", appName,
+			"rename-command", "CONFIG", configCommandName,
+		).Err(); err != nil {
+			return fmt.Errorf("restore Sentinel CONFIG rename: %w", err)
+		}
+	}
+	return nil
+}
+
 func (c *LocalClient) PingRedis(ctx context.Context) error {
 	return c.redis.Ping(ctx).Err()
 }

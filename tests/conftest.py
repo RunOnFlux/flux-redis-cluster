@@ -58,5 +58,38 @@ def cluster(running_cluster, mock_api, docker_client):
 
 
 @pytest.fixture
+def unreachable_host_port_cluster(
+    project_dir: Path,
+    built_image,
+    docker_client,
+):
+    """Start a cluster whose advertised Redis host port has no listener."""
+    compose_cmd = [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.yml",
+        "-f",
+        "docker-compose.test.yml",
+        "-f",
+        "docker-compose.unreachable.yml",
+    ]
+    subprocess.run(
+        compose_cmd + ["down", "-v", "--remove-orphans"],
+        cwd=project_dir,
+        check=False,
+    )
+    time.sleep(2)
+    subprocess.run(compose_cmd + ["up", "-d"], cwd=project_dir, check=True)
+    yield RedisClusterManager(docker_client)
+    subprocess.run(
+        compose_cmd + ["down", "-v", "--remove-orphans"],
+        cwd=project_dir,
+        check=False,
+    )
+    time.sleep(2)
+
+
+@pytest.fixture
 def mock_api(running_cluster):
     return MockApiClient("http://localhost:8080")

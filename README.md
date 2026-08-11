@@ -1,6 +1,6 @@
 # Flux Redis Cluster
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![Redis](https://img.shields.io/badge/Redis-6.0.16-red.svg)
 ![Sentinel](https://img.shields.io/badge/Sentinel-High%20Availability-green.svg)
 ![Docker](https://img.shields.io/badge/Docker-required-blue.svg)
@@ -110,9 +110,13 @@ Key Points:
 
 - **Background Process**: Continuously monitors Flux API.
 - **Automatic Adjustments**: 
-  - Adds new Sentinel instances to the local Sentinel configuration using `SENTINEL MONITOR`.
-  - Removes dead or unavailable Sentinel and Redis nodes using `SENTINEL REMOVE`.
+  - Leaves ordinary transient failover to Redis Sentinel.
+  - When the monitored master is permanently removed from the Flux topology, probes the surviving Redis nodes and selects the node with the greatest replication offset.
+  - Promotes the selected survivor, points the remaining Redis nodes at it, and rebuilds every local Sentinel monitor around the same master address.
+  - Uses the lowest IP as a deterministic tie-break when replication offsets match.
 - **Self-Registration**: New nodes automatically join the cluster as replicas when they start up.
+
+Recovery is intentionally attempted only after the old master disappears from the authoritative Flux location list. An unreachable master that is still registered may be a network partition, where forced promotion could create split brain. All nodes still advertised by Flux must be reachable so that every updater evaluates the same candidates; unavailable survivors must first disappear from the Flux location list.
 
 ### Service Management
 
@@ -183,6 +187,20 @@ pytest tests/test_cluster.py -v
 ```
 
 The test suite automatically builds images, tests initialization and role assignments, triggers a master node kill, and verifies that a failover successfully executes and proxy traffic routes correctly.
+
+To reproduce the TLS reset caused by an advertised Redis host port with no corresponding route:
+
+```bash
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.test.yml \
+  -f docker-compose.unreachable.yml \
+  up -d --build
+
+pytest tests/scenarios/test_mapped_port_failure.py -v
+```
+
+This diagnostic override advertises port `16379` without forwarding it to Redis's container port `6379`. The initial master's local proxy remains usable while replica proxies fail during the TLS handshake, matching the production symptom.
 
 ### Logs
 

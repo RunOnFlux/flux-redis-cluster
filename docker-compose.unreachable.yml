@@ -1,0 +1,12 @@
+# Diagnostic override used by test_mapped_port_failure.py. It models the Flux
+# configuration advertising 16379 while no 16379 -> 6379 route exists.
+services:
+  redis-node1:
+    environment:
+      HOST_REDIS_PORT: "16379"
+  redis-node2:
+    environment:
+      HOST_REDIS_PORT: "16379"
+  redis-node3:
+    environment:
+      HOST_REDIS_PORT: "16379"
